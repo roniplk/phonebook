@@ -10,7 +10,7 @@ app.use(express.json())
 app.use(morgan("tiny"))
 app.use(cors())
 
-app.get("/info", (req, res) => {
+app.get(["/", "/info"], (req, res) => {
 	const p1 = `<p>This phonebook currently includes ${persons.length} people</p>`
 	const p2 = `<p>Request received at <em>${Date()}</em></p>`
 	res.send(`${p1} ${p2}`)
