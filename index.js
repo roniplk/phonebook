@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3001
 app.use(express.json())
 app.use(morgan("tiny"))
 app.use(cors())
+app.use(express.static("dist")) // static front-end
 
 app.get("/info", (req, res) => {
 	const p1 = `<p>This phonebook currently includes ${persons.length} people</p>`
