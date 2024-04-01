@@ -8,14 +8,23 @@ const PORT = process.env.PORT || 3001
 
 // middleware
 app.use(express.static("dist")) // front-end
-app.use(express.json())
-app.use(morgan("tiny")) // logger
 app.use(cors())
+app.use(express.json())
 
+// request logging
+app.use(morgan("tiny"))
+
+
+
+
+// routes
 app.get("/info", (req, res) => {
-  const p1 = `<p>This phonebook currently includes ${persons.length} people</p>`
-  const p2 = `<p>Request received at <em>${Date()}</em></p>`
-  res.send(`${p1} ${p2}`)
+  Person.countDocuments()
+    .then(result => {
+      const p1 = `<p>This phonebook currently includes ${result} people</p>`
+      const p2 = `<p>Request received at <em>${Date()}</em></p>`
+      res.send(`${p1} ${p2}`)
+    })
 })
 
 app.get("/api/persons", (req, res) => {
@@ -25,17 +34,17 @@ app.get("/api/persons", (req, res) => {
     })
 })
 
-app.get("/api/persons/:id", (req, res) => {
-  console.log("getting")
+app.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id
 
   Person.findById(id)
     .then(result => {
       res.json(result)
     })
+    .catch(err => {console.log("ERRRR"); next(err)})
 })
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id
 
   Person.findByIdAndDelete(id)
@@ -46,10 +55,10 @@ app.delete("/api/persons/:id", (req, res) => {
         res.json(result)
       }
     })
+    .catch(err => next(err))
 })
 
 app.post("/api/persons", (req, res) => {
-  // check valid request body
   const body = req.body
   let errorMsg = null
 
@@ -74,5 +83,20 @@ app.post("/api/persons", (req, res) => {
       })
   })
 })
+
+// undefined endpoint
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: "unknown endpoint" })
+}
+app.use(unknownEndpoint)
+
+// error handling
+const errorHandler = (err, req, res, next) => {
+  console.log(err.message)
+  if (err.name === "CastError")
+    return res.status(400).send({ error: "Bad id" })
+  next(err)
+}
+app.use(errorHandler)
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
